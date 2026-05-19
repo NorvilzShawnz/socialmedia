@@ -25,6 +25,8 @@ def index(request):
     authenticatedUser = request.user
     
     if request.method == 'POST':
+        if not authenticatedUser.is_authenticated:
+            return redirect('signin')
         if request.POST.get('content'):
             new_post = VibePost.objects.create(
                 author = authenticatedUser,
@@ -60,9 +62,14 @@ def index(request):
 
 def profile(request):
     authenticatedUser = request.user
-    
-    profile_owner_id = int( request.GET.get("profile_owner_id") )
-    
+
+    profile_owner_id = request.GET.get("profile_owner_id")
+    if not profile_owner_id:
+        if not authenticatedUser.is_authenticated:
+            return redirect('signin')
+        profile_owner_id = authenticatedUser.id
+    profile_owner_id = int(profile_owner_id)
+
     profileOwner = VibeUser.objects.get(id=profile_owner_id)
     postsUserMade = VibePost.objects.filter(author=profileOwner).difference(allGroupPosts)
     context = {
