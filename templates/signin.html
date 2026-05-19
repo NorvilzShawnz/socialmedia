@@ -20,6 +20,13 @@
     <div class="main-content-box" id="signin-signup-box">
         <h1>Sign Into VibeSpace</h1>
         <hr>
+        {% if messages %}
+            <ul class="messages" style="list-style:none; padding:0; color:#c00;">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
         <form id="credentials-form" action="/signin/" method="POST">
     {% csrf_token %}
 
