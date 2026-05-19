@@ -69,6 +69,68 @@ This repo includes `render.yaml`, `build.sh`, and `runtime.txt` for one-click de
 | `DATABASE_URL` | Postgres connection string | Auto-wired from the Render DB |
 | `ALLOWED_HOSTS` | Comma-separated host list | Optional; Render's hostname is added automatically |
 
+## Deploying to PythonAnywhere
+
+PythonAnywhere is a free Django host that does not require a credit card. Deployment is manual (no git-push auto-deploy), but it only takes a few minutes.
+
+1. **Clone the repo** in a Bash console:
+   ```bash
+   git clone https://github.com/NorvilzShawnz/socialmedia.git
+   cd socialmedia
+   ```
+
+2. **Create a virtualenv** (use the highest Python 3.x your tier supports):
+   ```bash
+   mkvirtualenv --python=/usr/bin/python3.10 vibe-env
+   pip install -r requirements.txt
+   ```
+
+3. **Create a MySQL database** in the **Databases** tab. Note the hostname (`<username>.mysql.pythonanywhere-services.com`) and the database name (`<username>$vibe`).
+
+4. **Create a `.env`** in `~/socialmedia/`:
+   ```
+   SECRET_KEY=<long-random-string>
+   DEBUG=False
+   ALLOWED_HOSTS=<username>.pythonanywhere.com
+   DATABASE_URL=mysql://<username>:<mysql-password>@<username>.mysql.pythonanywhere-services.com/<username>$vibe
+   ```
+
+5. **Run migrations and collect static files**:
+   ```bash
+   workon vibe-env
+   cd ~/socialmedia
+   python manage.py migrate
+   python manage.py collectstatic --no-input
+   python manage.py createsuperuser
+   ```
+
+6. **Create the web app** under the **Web** tab → *Add a new web app* → *Manual configuration* → matching Python version. Then set:
+   - **Source code:** `/home/<username>/socialmedia`
+   - **Working directory:** `/home/<username>/socialmedia`
+   - **Virtualenv:** `/home/<username>/.virtualenvs/vibe-env`
+
+7. **Edit the WSGI file** (link in the Web tab) and replace its contents with:
+   ```python
+   import os, sys
+   from dotenv import load_dotenv
+
+   path = '/home/<username>/socialmedia'
+   if path not in sys.path:
+       sys.path.insert(0, path)
+   load_dotenv(os.path.join(path, '.env'))
+
+   os.environ['DJANGO_SETTINGS_MODULE'] = 'social_media_project.settings'
+
+   from django.core.wsgi import get_wsgi_application
+   application = get_wsgi_application()
+   ```
+
+8. **Add static-file mappings** in the Web tab:
+   - `/static/` → `/home/<username>/socialmedia/staticfiles`
+   - `/media/` → `/home/<username>/socialmedia/media`
+
+9. **Reload** the web app. Live at `https://<username>.pythonanywhere.com`.
+
 ### A note about user-uploaded media
 
 Render's free web service has an ephemeral filesystem — files written to `/media` are wiped on every redeploy and restart. For a demo/portfolio that's fine. For real persistence, either add a Render Disk (paid) or swap the storage backend to S3/Cloudflare R2 via `django-storages`.
