@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: vibe-social
+    runtime: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn social_media_project.wsgi:application"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: PYTHON_VERSION
+        value: "3.12.4"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vibe-db
+          property: connectionString
+
+databases:
+  - name: vibe-db
+    plan: free
+    databaseName: vibe
+    user: vibe
