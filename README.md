@@ -71,7 +71,7 @@ This repo includes `render.yaml`, `build.sh`, and `runtime.txt` for one-click de
 
 ## Deploying to PythonAnywhere
 
-PythonAnywhere is a free Django host that does not require a credit card. Deployment is manual (no git-push auto-deploy), but it only takes a few minutes.
+PythonAnywhere is a free Django host that does not require a credit card. The free tier does not include MySQL, so this guide uses SQLite — fine for a portfolio demo since PythonAnywhere's filesystem is persistent (the SQLite file survives reloads).
 
 1. **Clone the repo** in a Bash console:
    ```bash
@@ -85,17 +85,15 @@ PythonAnywhere is a free Django host that does not require a credit card. Deploy
    pip install -r requirements.txt
    ```
 
-3. **Create a MySQL database** in the **Databases** tab. Note the hostname (`<username>.mysql.pythonanywhere-services.com`) and the database name (`<username>$vibe`).
-
-4. **Create a `.env`** in `~/socialmedia/`:
+3. **Create a `.env`** in `~/socialmedia/`:
    ```
    SECRET_KEY=<long-random-string>
    DEBUG=False
    ALLOWED_HOSTS=<username>.pythonanywhere.com
-   DATABASE_URL=mysql://<username>:<mysql-password>@<username>.mysql.pythonanywhere-services.com/<username>$vibe
    ```
+   (No `DATABASE_URL` — `settings.py` falls back to SQLite at `db.sqlite3` in the project root.)
 
-5. **Run migrations and collect static files**:
+4. **Run migrations and collect static files**:
    ```bash
    workon vibe-env
    cd ~/socialmedia
@@ -104,12 +102,12 @@ PythonAnywhere is a free Django host that does not require a credit card. Deploy
    python manage.py createsuperuser
    ```
 
-6. **Create the web app** under the **Web** tab → *Add a new web app* → *Manual configuration* → matching Python version. Then set:
+5. **Create the web app** under the **Web** tab → *Add a new web app* → *Manual configuration* → matching Python version. Then set:
    - **Source code:** `/home/<username>/socialmedia`
    - **Working directory:** `/home/<username>/socialmedia`
    - **Virtualenv:** `/home/<username>/.virtualenvs/vibe-env`
 
-7. **Edit the WSGI file** (link in the Web tab) and replace its contents with:
+6. **Edit the WSGI file** (link in the Web tab) and replace its contents with:
    ```python
    import os, sys
    from dotenv import load_dotenv
@@ -125,15 +123,17 @@ PythonAnywhere is a free Django host that does not require a credit card. Deploy
    application = get_wsgi_application()
    ```
 
-8. **Add static-file mappings** in the Web tab:
+7. **Add static-file mappings** in the Web tab:
    - `/static/` → `/home/<username>/socialmedia/staticfiles`
    - `/media/` → `/home/<username>/socialmedia/media`
 
-9. **Reload** the web app. Live at `https://<username>.pythonanywhere.com`.
+8. **Reload** the web app. Live at `https://<username>.pythonanywhere.com`.
 
 ### A note about user-uploaded media
 
-Render's free web service has an ephemeral filesystem — files written to `/media` are wiped on every redeploy and restart. For a demo/portfolio that's fine. For real persistence, either add a Render Disk (paid) or swap the storage backend to S3/Cloudflare R2 via `django-storages`.
+On **Render**'s free tier, the filesystem is ephemeral — uploaded files are wiped on every redeploy/restart. For real persistence, either add a Render Disk (paid) or swap the storage backend to S3/Cloudflare R2 via `django-storages`.
+
+On **PythonAnywhere**, the filesystem is persistent, so uploads survive reloads.
 
 ## Project Layout
 
